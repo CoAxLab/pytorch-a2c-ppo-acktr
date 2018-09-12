@@ -1,14 +1,13 @@
+"""
+Modify standard PyTorch distributions so they are compatible with this code.
+"""
 import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils import AddBias, init, init_normc_
-
-"""
-Modify standard PyTorch distributions so they are compatible with this code.
-"""
+from a2c_ppo_acktr.utils import AddBias, init, init_normc_
 
 FixedCategorical = torch.distributions.Categorical
 

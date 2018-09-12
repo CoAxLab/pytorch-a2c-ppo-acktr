@@ -7,23 +7,45 @@ import torch
 
 from baselines.common.vec_env.dummy_vec_env import DummyVecEnv
 from baselines.common.vec_env.vec_normalize import VecNormalize
-from envs import VecPyTorch, make_vec_envs
+from a2c_ppo_acktr.envs import VecPyTorch, make_vec_envs
+# from a2c_ppo_acktr.utils import update_current_obs
+
+# workaround to unpickle olf model files
+import sys
+sys.path.append('a2c_ppo_acktr')
 
 parser = argparse.ArgumentParser(description='RL')
-parser.add_argument('--seed', type=int, default=1,
-                    help='random seed (default: 1)')
-parser.add_argument('--log-interval', type=int, default=10,
-                    help='log interval, one log per n updates (default: 10)')
-parser.add_argument('--env-name', default='PongNoFrameskip-v4',
-                    help='environment to train on (default: PongNoFrameskip-v4)')
-parser.add_argument('--load-dir', default='./trained_models/',
-                    help='directory to save agent logs (default: ./trained_models/)')
-parser.add_argument('--add-timestep', action='store_true', default=False,
-                    help='add timestep to observations')
+parser.add_argument(
+    '--seed', type=int, default=1, help='random seed (default: 1)')
+parser.add_argument(
+    '--log-interval',
+    type=int,
+    default=10,
+    help='log interval, one log per n updates (default: 10)')
+parser.add_argument(
+    '--env-name',
+    default='PongNoFrameskip-v4',
+    help='environment to train on (default: PongNoFrameskip-v4)')
+parser.add_argument(
+    '--load-dir',
+    default='./trained_models/',
+    help='directory to save agent logs (default: ./trained_models/)')
+parser.add_argument(
+    '--add-timestep',
+    action='store_true',
+    default=False,
+    help='add timestep to observations')
 args = parser.parse_args()
 
-env = make_vec_envs(args.env_name, args.seed + 1000, 1,
-                            None, None, args.add_timestep, device='cpu')
+env = make_vec_envs(
+    args.env_name,
+    args.seed + 1000,
+    1,
+    None,
+    None,
+    args.add_timestep,
+    device='cpu',
+    allow_early_resets=True)
 
 # Get a render function
 render_func = None
@@ -49,14 +71,17 @@ if isinstance(env.venv, VecNormalize):
     # An ugly hack to remove updates
     def _obfilt(self, obs):
         if self.ob_rms:
-            obs = np.clip((obs - self.ob_rms.mean) / np.sqrt(self.ob_rms.var + self.epsilon), -self.clipob, self.clipob)
+            obs = np.clip((obs - self.ob_rms.mean) /
+                          np.sqrt(self.ob_rms.var + self.epsilon),
+                          -self.clipob, self.clipob)
             return obs
         else:
             return obs
 
     env.venv._obfilt = types.MethodType(_obfilt, env.venv)
 
-recurrent_hidden_states = torch.zeros(1, actor_critic.recurrent_hidden_state_size)
+recurrent_hidden_states = torch.zeros(1,
+                                      actor_critic.recurrent_hidden_state_size)
 masks = torch.zeros(1, 1)
 
 if render_func is not None:
