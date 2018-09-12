@@ -59,8 +59,8 @@ git clone https://github.com/openai/baselines.git
 cd baselines
 pip install -e .
 
-# Other requirements
-pip install -r requirements.txt
+# This package
+pip install -e .
 ```
 
 ## Contributions
