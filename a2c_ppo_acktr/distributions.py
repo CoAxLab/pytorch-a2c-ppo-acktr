@@ -9,23 +9,22 @@ import torch.nn.functional as F
 
 from a2c_ppo_acktr.utils import AddBias, init, init_normc_
 
-FixedCategorical = torch.distributions.Categorical
+from torch.distributions import Categorical as FixedCategorical
+from torch.distributions import Normal as FixedNormal
 
+# Override and rename torch distributions
 old_sample = FixedCategorical.sample
 FixedCategorical.sample = lambda self: old_sample(self).unsqueeze(-1)
 
 log_prob_cat = FixedCategorical.log_prob
 FixedCategorical.log_probs = lambda self, actions: log_prob_cat(self, actions.squeeze(-1)).unsqueeze(-1)
-
 FixedCategorical.mode = lambda self: self.probs.argmax(dim=1, keepdim=True)
 
-FixedNormal = torch.distributions.Normal
 log_prob_normal = FixedNormal.log_prob
 FixedNormal.log_probs = lambda self, actions: log_prob_normal(self, actions).sum(-1, keepdim=True)
 
 entropy = FixedNormal.entropy
 FixedNormal.entropy = lambda self: entropy(self).sum(-1)
-
 FixedNormal.mode = lambda self: self.mean
 
 

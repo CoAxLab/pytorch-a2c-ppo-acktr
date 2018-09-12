@@ -48,8 +48,10 @@ def make_env(env_id, seed, rank, log_dir, add_timestep, allow_early_resets):
             env = AddTimestep(env)
 
         if log_dir is not None:
-            env = bench.Monitor(env, os.path.join(log_dir, str(rank)),
-                                allow_early_resets=allow_early_resets)
+            env = bench.Monitor(
+                env,
+                os.path.join(log_dir, str(rank)),
+                allow_early_resets=allow_early_resets)
 
         if is_atari:
             env = wrap_deepmind(env)
@@ -63,9 +65,13 @@ def make_env(env_id, seed, rank, log_dir, add_timestep, allow_early_resets):
 
     return _thunk
 
-def make_vec_envs(env_name, seed, num_processes, gamma, log_dir, add_timestep, device, allow_early_resets):
-    envs = [make_env(env_name, seed, i, log_dir, add_timestep, allow_early_resets)
-                for i in range(num_processes)]
+
+def make_vec_envs(env_name, seed, num_processes, gamma, log_dir, add_timestep,
+                  device, allow_early_resets):
+    envs = [
+        make_env(env_name, seed, i, log_dir, add_timestep, allow_early_resets)
+        for i in range(num_processes)
+    ]
 
     if len(envs) > 1:
         envs = SubprocVecEnv(envs)
@@ -154,15 +160,17 @@ class VecPyTorchFrameStack(VecEnvWrapper):
         self.shape_dim0 = wos.low.shape[0]
         low = np.repeat(wos.low, self.nstack, axis=0)
         high = np.repeat(wos.high, self.nstack, axis=0)
-        self.stackedobs = np.zeros((venv.num_envs,) + low.shape)
+        self.stackedobs = np.zeros((venv.num_envs, ) + low.shape)
         self.stackedobs = torch.from_numpy(self.stackedobs).float()
         self.stackedobs = self.stackedobs.to(device)
-        observation_space = gym.spaces.Box(low=low, high=high, dtype=venv.observation_space.dtype)
+        observation_space = gym.spaces.Box(
+            low=low, high=high, dtype=venv.observation_space.dtype)
         VecEnvWrapper.__init__(self, venv, observation_space=observation_space)
 
     def step_wait(self):
         obs, rews, news, infos = self.venv.step_wait()
-        self.stackedobs[:, :-self.shape_dim0] = self.stackedobs[:, self.shape_dim0:]
+        self.stackedobs[:, :-self.shape_dim0] = self.stackedobs[:, self.
+                                                                shape_dim0:]
         for (i, new) in enumerate(news):
             if new:
                 self.stackedobs[i] = 0
